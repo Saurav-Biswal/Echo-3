@@ -1,0 +1,34 @@
+# Echo backend dependencies.
+# Loose bounds are resolved once, then frozen into requirements.lock.txt.
+
+# --- Web framework ---
+fastapi>=0.115
+uvicorn[standard]>=0.32
+python-multipart>=0.0.12
+
+# --- Config / validation ---
+pydantic>=2.9
+pydantic-settings>=2.6
+
+# --- Database (SQLite now, Postgres-ready) ---
+SQLAlchemy>=2.0.36
+aiosqlite>=0.20
+greenlet>=3.1
+alembic>=1.14
+
+# --- AI ---
+google-genai>=1.0
+
+# --- Media acquisition ---
+httpx>=0.27
+yt-dlp>=2024.12.13
+
+# --- OCR (screenshot fallback; Gemini vision is the primary path) ---
+pillow>=11.0
+
+# --- Logging ---
+structlog>=24.4
+
+# --- Tests ---
+pytest>=8.3
+pytest-asyncio>=0.24

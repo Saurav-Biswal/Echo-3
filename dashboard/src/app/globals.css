@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Echo design tokens. Dark-first, near-black (never pure #000), one restrained
+   accent, plus a distinct-but-harmonious hue per memory category.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-ink-950: #08090c;
+  --color-ink-900: #0c0e13;
+  --color-ink-850: #11141b;
+  --color-ink-800: #171b24;
+  --color-ink-700: #1f242f;
+  --color-line: #232935;
+  --color-line-soft: #1a1f29;
+
+  --color-fog-50: #f5f6fa;
+  --color-fog-100: #e7eaf2;
+  --color-fog-300: #b3bbcd;
+  --color-fog-400: #8d95a9;
+  --color-fog-500: #666e81;
+  --color-fog-600: #4b5261;
+
+  --color-accent: #7c6bff;
+  --color-accent-soft: #1b1a33;
+
+  --color-place: #56b6ff;
+  --color-event: #ffb259;
+  --color-recipe: #5fd3a0;
+  --color-tool: #b79cff;
+  --color-topic: #ff8fb1;
+
+  --font-sans:
+    ui-sans-serif, -apple-system, "Segoe UI Variable Display", "Segoe UI",
+    Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas,
+    monospace;
+}
+
+/* Per-category accent, exposed as --cat so components stay generic. */
+[data-category] {
+  --cat: var(--color-accent);
+}
+[data-category="PLACE"] {
+  --cat: var(--color-place);
+}
+[data-category="EVENT"] {
+  --cat: var(--color-event);
+}
+[data-category="RECIPE"] {
+  --cat: var(--color-recipe);
+}
+[data-category="TOOL"] {
+  --cat: var(--color-tool);
+}
+[data-category="TOPIC"] {
+  --cat: var(--color-topic);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-ink-950);
+  color: var(--color-fog-100);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A single quiet field of light behind the console, not a gradient parade. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      60rem 40rem at 18% -10%,
+      color-mix(in srgb, var(--color-accent) 10%, transparent),
+      transparent 70%
+    );
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+@keyframes echo-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.echo-pulse {
+  animation: echo-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes echo-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.echo-rise {
+  animation: echo-rise 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
