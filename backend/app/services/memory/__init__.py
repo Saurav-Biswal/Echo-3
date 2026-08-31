@@ -185,6 +185,26 @@ class MemoryService:
         triggers = build_triggers(
             analysis=analysis, entity=primary, user_id=user_id, tz=tz
         )
+        from app.services.media.geocoding import geocode
+        for trigger in triggers:
+            if trigger.trigger_type == TriggerType.LOCATION and trigger.latitude is None:
+                candidates = [
+                    (primary.address if primary else None),
+                    (primary.location if primary else None),
+                    (primary.venue if primary else None),
+                    trigger.place_label,
+                ]
+                for query in candidates:
+                    if query and query.strip():
+                        coords = await geocode(query.strip())
+                        if coords:
+                            trigger.latitude, trigger.longitude = coords
+                            trigger.dedupe_key = f"location:{coords[0]:.4f},{coords[1]:.4f}"
+                            trigger.payload["anchored"] = True
+                            if primary and primary.latitude is None:
+                                primary.latitude, primary.longitude = coords
+                            break
+
         actions = build_actions(
             category=analysis.category,
             title=analysis.title,

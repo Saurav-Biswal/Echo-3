@@ -33,9 +33,27 @@ async def list_notifications(
     user: CurrentUser,
     session: SessionDep,
     status_filter: NotificationStatus | None = Query(None, alias="status"),
+    latitude: float | None = Query(None, ge=-90, le=90),
+    longitude: float | None = Query(None, ge=-180, le=180),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> Page[NotificationRead]:
+    if latitude is not None and longitude is not None:
+        from app.models import TriggerType
+        from app.services.notification import ResurfacingService
+        from app.services.trigger import TriggerContext
+
+        service = ResurfacingService(session)
+        context = TriggerContext(
+            now=utcnow(), latitude=latitude, longitude=longitude, force=False
+        )
+        await service.resurface(
+            user_id=user.id,
+            context=context,
+            trigger_type=TriggerType.LOCATION,
+        )
+        await session.commit()
+
     items, total = await NotificationRepository(session).list(
         user_id=user.id, status=status_filter, limit=limit, offset=offset
     )

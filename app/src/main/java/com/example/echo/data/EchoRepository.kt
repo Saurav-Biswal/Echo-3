@@ -123,9 +123,13 @@ class EchoRepository(private val api: EchoApi = Network.api) {
     suspend fun correct(memoryId: String, correction: MemoryCorrection): Result<MemoryDto> =
         callFor { api.correct(memoryId, correction) }
 
-    /** The resurfacing feed the poller reads; defaults to freshly-SENT notices. */
-    suspend fun notifications(status: String = "SENT"): Result<NotificationPage> =
-        callFor { api.notifications(status = status) }
+    /** The resurfacing feed the poller reads; defaults to freshly-SENT notices. Accepts device GPS coords. */
+    suspend fun notifications(
+        status: String = "SENT",
+        latitude: Double? = null,
+        longitude: Double? = null,
+    ): Result<NotificationPage> =
+        callFor { api.notifications(status = status, latitude = latitude, longitude = longitude) }
 
     /** Ack a notification. [action] "acted" (default) or "dismissed" (§22). */
     suspend fun ack(id: String, action: String = "acted"): Result<Unit> =

@@ -49,19 +49,18 @@
 **Foreground notification**: ✅ Verified end-to-end on real device
 **Background notification**: ⚠️ OEM battery optimization may kill the foreground service — documented limitation, not a bug
 
-### Phase 2 — Simulate Nearby (commit 1ddc75a)
+### Phase 2 — Location Resurfacing & Always-On GPS Geofencing (commit 1ddc75a & latest)
 
 | Component | What | Status |
 |-----------|------|--------|
-| `POST /api/demo/simulate-nearby` | Force-resurface a specific memory via `ResurfacingService.resurface(force=True)` | ✅ verified end-to-end |
-| `EchoApi.simulateNearby()` | Android API call | ✅ verified end-to-end |
-| `EchoRepository.simulateNearby()` | Repository wrapper | ✅ verified end-to-end |
-| `HomeViewModel.simulateNearby()` | ViewModel action with status feedback (auto-clears after 4s) | ✅ verified end-to-end |
-| MemoryCard ⚡ SIMULATE_NEARBY button | Per-card amber button, calls `onSimulateNearby(memory.id)` | ✅ verified end-to-end |
-| Notification delivery via existing pipeline | Same `NotificationPoller` → `EchoNotifier` path as Phase 1 | ✅ verified on device (channel `echo_resurfacing`) |
-| Poller interval reduced for demo | 15s instead of 30s | ✅ verified |
-| Tap-through to memory dialog | Notification tap opens focused memory dialog with primary action | ✅ verified on device |
-| Duplicate prevention | Repeated taps on already-fired trigger return 0 fired / no spam | ✅ verified |
+| Always-on Location Access | `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `FOREGROUND_SERVICE_LOCATION` declared and requested at startup | ✅ verified on device |
+| Foreground GPS Poller | `NotificationPoller` samples device GPS/Network location continuously | ✅ verified on device |
+| Automatic Geofence Matching | `GET /api/notifications` evaluates device coordinates against pending `LOCATION` triggers (Haversine <= 300m) | ✅ verified end-to-end |
+| OpenStreetMap Geocoding | Nominatim async geocoder anchors place labels/addresses to real-world (lat, lon) on save | ✅ verified end-to-end |
+| Simulate Nearby Button | Developer fallback button on cards for instant pitching | ✅ verified end-to-end |
+| Notification delivery | High-importance system notification on `echo_resurfacing` | ✅ verified on device |
+| Tap-through to memory dialog | Notification tap opens focused memory dialog with primary action (e.g. `OPEN IN MAPS`) | ✅ verified on device |
+| Duplicate prevention | Evaluated triggers fire once, transitions to `FIRED`, dedupe prevented | ✅ verified |
 
 ---
 

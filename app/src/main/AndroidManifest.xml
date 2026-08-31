@@ -6,9 +6,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Raise resurfacing notifications (Android 13+ runtime prompt). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Continuous location access for automatic geofence resurfacing. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Poll the backend in the background so notifications arrive when the app is closed. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:name=".EchoApplication"
@@ -61,7 +65,7 @@
         <service
             android:name=".notify.NotificationPoller"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync|location" />
     </application>
 
 </manifest>

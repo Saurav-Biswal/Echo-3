@@ -44,10 +44,12 @@ interface EchoApi {
     @GET("overview")
     suspend fun overview(): Response<OverviewResponse>
 
-    /** The resurfacing feed the device polls; filter by status (e.g. "SENT"). */
+    /** The resurfacing feed the device polls; filter by status (e.g. "SENT") and pass GPS coordinates for geofencing. */
     @GET("notifications")
     suspend fun notifications(
         @Query("status") status: String? = null,
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null,
         @Query("limit") limit: Int = 50,
     ): Response<NotificationPage>
 

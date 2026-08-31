@@ -42,14 +42,14 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: HomeViewModel by viewModels()
 
-    private val requestNotificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* best effort */ }
+    private val requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { /* best effort */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         EchoNotifier.ensureChannels(this)
-        maybeRequestNotificationPermission()
+        maybeRequestPermissions()
         NotificationPoller.start(this)
         handleIntent(intent)
 
@@ -127,10 +127,15 @@ class MainActivity : ComponentActivity() {
         if (memoryId != null) viewModel.openMemory(memoryId)
     }
 
-    private fun maybeRequestNotificationPermission() {
+    private fun maybeRequestPermissions() {
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
+        requestPermissions.launch(permissions.toTypedArray())
     }
 
     companion object {
