@@ -53,14 +53,15 @@
 
 | Component | What | Status |
 |-----------|------|--------|
-| `POST /api/demo/simulate-nearby` | Force-resurface a specific memory via `ResurfacingService.resurface(force=True)` | ✅ implemented, builds |
-| `EchoApi.simulateNearby()` | Android API call | ✅ implemented, builds |
-| `EchoRepository.simulateNearby()` | Repository wrapper | ✅ implemented, builds |
-| `HomeViewModel.simulateNearby()` | ViewModel action with status feedback (auto-clears after 4s) | ✅ implemented, builds |
-| MemoryCard ⚡ SIMULATE_NEARBY button | Per-card amber button, calls `onSimulateNearby(memory.id)` | ✅ implemented, builds |
-| Notification delivery via existing pipeline | Same `NotificationPoller` → `EchoNotifier` path as Phase 1 | ✅ reuses Phase 1 (no new code path) |
-| Poller interval reduced for demo | 15s instead of 30s | ✅ implemented |
-| **End-to-end on device** | Tap button → notification → tap-through → memory dialog | ⚠️ **needs device verification** |
+| `POST /api/demo/simulate-nearby` | Force-resurface a specific memory via `ResurfacingService.resurface(force=True)` | ✅ verified end-to-end |
+| `EchoApi.simulateNearby()` | Android API call | ✅ verified end-to-end |
+| `EchoRepository.simulateNearby()` | Repository wrapper | ✅ verified end-to-end |
+| `HomeViewModel.simulateNearby()` | ViewModel action with status feedback (auto-clears after 4s) | ✅ verified end-to-end |
+| MemoryCard ⚡ SIMULATE_NEARBY button | Per-card amber button, calls `onSimulateNearby(memory.id)` | ✅ verified end-to-end |
+| Notification delivery via existing pipeline | Same `NotificationPoller` → `EchoNotifier` path as Phase 1 | ✅ verified on device (channel `echo_resurfacing`) |
+| Poller interval reduced for demo | 15s instead of 30s | ✅ verified |
+| Tap-through to memory dialog | Notification tap opens focused memory dialog with primary action | ✅ verified on device |
+| Duplicate prevention | Repeated taps on already-fired trigger return 0 fired / no spam | ✅ verified |
 
 ---
 
