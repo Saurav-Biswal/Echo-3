@@ -1,6 +1,6 @@
 # Echo — Handoff Status
 
-> **Last updated**: 2026-08-31 by Antigravity IDE (Session 2)
+> **Last updated**: 2026-08-31T16:30 IST by Antigravity IDE (Session 2)
 > **Previous session**: Claude Code (cut off mid-task, no handoff doc created)
 
 ---
@@ -12,6 +12,7 @@
 - **Commits**:
   - `f7a06ed` — Initial architecture: full capture→analyze→trigger pipeline, share sheet, UI, demo endpoints
   - `7fe8935` — Phase 1: device notification delivery + tap-through (38 files, +1504 lines)
+  - `1ddc75a` — Phase 2: Simulate Nearby demo action + HANDOFF_STATUS.md (10 files, +233 lines)
 
 ---
 
@@ -48,17 +49,18 @@
 **Foreground notification**: ✅ Verified end-to-end on real device
 **Background notification**: ⚠️ OEM battery optimization may kill the foreground service — documented limitation, not a bug
 
-### Phase 2 — Simulate Nearby (this session)
+### Phase 2 — Simulate Nearby (commit 1ddc75a)
 
 | Component | What | Status |
 |-----------|------|--------|
-| `POST /api/demo/simulate-nearby` | Force-resurface a specific memory | ✅ implemented |
-| `EchoApi.simulateNearby()` | Android API call | ✅ implemented |
-| `EchoRepository.simulateNearby()` | Repository wrapper | ✅ implemented |
-| `HomeViewModel.simulateNearby()` | ViewModel action with status feedback | ✅ implemented |
-| MemoryCard ⚡ SIMULATE_NEARBY button | Per-card demo action | ✅ implemented |
-| Notification delivery via existing pipeline | Same `NotificationPoller` → `EchoNotifier` path | ✅ reuses Phase 1 |
+| `POST /api/demo/simulate-nearby` | Force-resurface a specific memory via `ResurfacingService.resurface(force=True)` | ✅ implemented, builds |
+| `EchoApi.simulateNearby()` | Android API call | ✅ implemented, builds |
+| `EchoRepository.simulateNearby()` | Repository wrapper | ✅ implemented, builds |
+| `HomeViewModel.simulateNearby()` | ViewModel action with status feedback (auto-clears after 4s) | ✅ implemented, builds |
+| MemoryCard ⚡ SIMULATE_NEARBY button | Per-card amber button, calls `onSimulateNearby(memory.id)` | ✅ implemented, builds |
+| Notification delivery via existing pipeline | Same `NotificationPoller` → `EchoNotifier` path as Phase 1 | ✅ reuses Phase 1 (no new code path) |
 | Poller interval reduced for demo | 15s instead of 30s | ✅ implemented |
+| **End-to-end on device** | Tap button → notification → tap-through → memory dialog | ⚠️ **needs device verification** |
 
 ---
 
