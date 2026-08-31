@@ -38,6 +38,9 @@ logger = get_logger(__name__)
 
 _RATE_LIMIT_MARKERS = ("429", "rate limit", "resource_exhausted", "quota")
 _TIMEOUT_MARKERS = ("timeout", "deadline", "504")
+# A retired or misspelled model name is a configuration fault, not a blip:
+# retrying it three times only delays a failure that will never succeed.
+_PERMANENT_MARKERS = ("404", "not_found", "is not found", "no longer available")
 
 
 class GeminiAIProvider(AIProvider):
@@ -182,4 +185,9 @@ def _classify_ai_error(exc: Exception) -> AiError:
         return AiRateLimitedError(detail=str(exc)[:300])
     if any(marker in message for marker in _TIMEOUT_MARKERS):
         return AiTimeoutError(detail=str(exc)[:300])
-    return AiError(detail=f"{type(exc).__name__}: {exc}"[:300])
+    error = AiError(detail=f"{type(exc).__name__}: {exc}"[:300])
+    if any(marker in message for marker in _PERMANENT_MARKERS):
+        # Skip straight to the fallback model instead of retrying a name the
+        # API has already told us it will never serve.
+        error.permanent = True
+    return error

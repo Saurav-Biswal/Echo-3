@@ -50,9 +50,15 @@ class Settings(BaseSettings):
     # implementing the identical interface (used by tests and by demos with no key).
     ai_provider: Literal["gemini", "mock"] = "gemini"
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.5-flash"
-    # Used when the primary model is unavailable or rate-limited.
-    gemini_fallback_model: str = "gemini-2.5-flash-lite"
+    # The 2.5 family is retired for new API keys (404 NOT_FOUND: "no longer
+    # available to new users"). Both models below were verified against Echo's
+    # own IntentAnalysis response schema. Avoid the floating "*-latest" aliases
+    # and the newest preview tier here: both returned 503 UNAVAILABLE under load
+    # during verification, and a demo cannot afford a coin-flip primary model.
+    gemini_model: str = "gemini-3.5-flash"
+    # Used when the primary model is unavailable or rate-limited. Deliberately a
+    # different model, so falling back actually changes the outcome.
+    gemini_fallback_model: str = "gemini-3.5-flash-lite"
     gemini_timeout_seconds: float = 120.0
     gemini_max_attempts: int = 3
     # Files API is used above this size; inline bytes below it.
@@ -92,6 +98,14 @@ class Settings(BaseSettings):
     demo_user_email: str = "demo@echo.app"
     demo_user_name: str = "Demo"
     demo_mode_enabled: bool = True
+
+    # ---------------------------------------------------------- timezone
+    # Extracted times are wall-clock ("7:30 pm") with no zone attached, so they
+    # are meaningless until anchored to one. The phone sends its IANA zone and
+    # we store it on the user; this is only the fallback for captures made
+    # before any client has declared a zone (curl, dashboard, seeded demo data).
+    # Set it to the zone the demo will be given in.
+    default_timezone: str = "Asia/Kolkata"
 
     @field_validator("cors_origins", mode="before")
     @classmethod

@@ -6,6 +6,7 @@ import com.example.echo.data.CaptureOutcome
 import com.example.echo.data.CaptureRequest
 import com.example.echo.data.EchoRepository
 import com.example.echo.data.JobResult
+import com.example.echo.data.MemoryDto
 import com.example.echo.data.OverviewResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,10 @@ class HomeViewModel(
     private val _capture = MutableStateFlow<String?>(null)
     /** Transient one-line status for the inline capture box; null when idle. */
     val captureStatus: StateFlow<String?> = _capture.asStateFlow()
+
+    private val _focused = MutableStateFlow<MemoryDto?>(null)
+    /** A memory to surface front-and-center (e.g. opened from a notification tap). */
+    val focusedMemory: StateFlow<MemoryDto?> = _focused.asStateFlow()
 
     fun refresh() {
         viewModelScope.launch {
@@ -73,5 +78,16 @@ class HomeViewModel(
 
     fun clearCaptureStatus() {
         _capture.value = null
+    }
+
+    /** Load a memory and surface it (called when a notification is tapped). */
+    fun openMemory(memoryId: String) {
+        viewModelScope.launch {
+            repo.memory(memoryId).onSuccess { _focused.value = it }
+        }
+    }
+
+    fun dismissFocused() {
+        _focused.value = null
     }
 }

@@ -13,13 +13,15 @@ for extension (§19).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from app.config import settings
 from app.models import Entity, ResurfacingTrigger, TriggerType
 from app.schemas.ai_output import IntentAnalysis
 from app.services.trigger.evaluators import TriggerContext, evaluate, get_evaluator
 from app.utils.timeparse import combine, parse_date, parse_datetime, parse_time, utcnow
+from app.utils.timezones import resolve_zone
 
 __all__ = [
     "TriggerContext",
@@ -35,9 +37,16 @@ def build_triggers(
     entity: Entity | None,
     user_id: uuid.UUID,
     now: datetime | None = None,
+    tz: ZoneInfo | timezone | None = None,
 ) -> list[ResurfacingTrigger]:
-    """Build the resurfacing trigger(s) for a memory. Usually exactly one."""
+    """Build the resurfacing trigger(s) for a memory. Usually exactly one.
+
+    ``tz`` is the user's zone, used to interpret extracted wall-clock times.
+    Omitting it falls back to ``settings.default_timezone`` - a documented
+    default, not an assumption that the source meant UTC.
+    """
     reference = now or utcnow()
+    zone = tz if tz is not None else resolve_zone(None)
     desired = analysis.resurfacing.type
     reason = analysis.resurfacing.reason.strip() or "Echo saved this for later."
 
@@ -48,7 +57,9 @@ def build_triggers(
         return [_manual_trigger(user_id, reason)]
 
     if desired in (TriggerType.DATE, TriggerType.TIME):
-        trigger = _time_trigger(analysis, entity, user_id, reason, reference, desired)
+        trigger = _time_trigger(
+            analysis, entity, user_id, reason, reference, desired, zone
+        )
         return [trigger]
 
     return [_manual_trigger(user_id, reason)]
@@ -94,8 +105,9 @@ def _time_trigger(
     reason: str,
     reference: datetime,
     desired: TriggerType,
+    tz: ZoneInfo | timezone,
 ) -> ResurfacingTrigger:
-    event_at = _resolve_moment(analysis, entity)
+    event_at = _resolve_moment(analysis, entity, tz)
     payload: dict[str, object] = {}
 
     if event_at is not None:
@@ -121,17 +133,19 @@ def _time_trigger(
     )
 
 
-def _resolve_moment(analysis: IntentAnalysis, entity: Entity | None) -> datetime | None:
-    explicit = parse_datetime(analysis.resurfacing.fire_at)
+def _resolve_moment(
+    analysis: IntentAnalysis, entity: Entity | None, tz: ZoneInfo | timezone
+) -> datetime | None:
+    explicit = parse_datetime(analysis.resurfacing.fire_at, tz=tz)
     if explicit is not None:
         return explicit
     if entity is not None and entity.starts_at is not None:
         return entity.starts_at
     if entity is not None and entity.event_date is not None:
-        return combine(entity.event_date, parse_time(entity.event_time))
-    day = parse_date(analysis.details.date)
+        return combine(entity.event_date, parse_time(entity.event_time), tz=tz)
+    day = parse_date(analysis.details.date, tz=tz)
     if day is not None:
-        return combine(day, parse_time(analysis.details.time))
+        return combine(day, parse_time(analysis.details.time), tz=tz)
     return None
 
 

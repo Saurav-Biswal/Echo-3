@@ -4,12 +4,21 @@ Models emit dates in whatever shape the source used - "2026-09-15",
 "September 15", "15 Sep 2026". Rather than reject those, parse what we can and
 return ``None`` otherwise; a missing date is a normal outcome (§9), a wrong one
 is a bug that fires a reminder on the wrong day.
+
+Every extracted time is **wall-clock in the user's zone**, never UTC: a poster
+saying "7:30 pm" says nothing about offsets. Functions that turn a date/time
+into an instant therefore require a ``tz`` and return an aware UTC datetime -
+storage is UTC, interpretation is local. Passing the zone is deliberately not
+optional here, so no caller can silently reintroduce the naive-UTC bug.
 """
 
 from __future__ import annotations
 
 import re
 from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+from app.utils.timezones import local_today, to_utc
 
 _MONTHS = {
     "jan": 1, "january": 1,
@@ -43,18 +52,32 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def parse_date(value: str | None, *, today: date | None = None) -> date | None:
+def parse_date(
+    value: str | None,
+    *,
+    today: date | None = None,
+    tz: ZoneInfo | timezone | None = None,
+) -> date | None:
     """Parse a date string. A year-less date resolves to its next occurrence.
 
     "September 15" seen in August 2026 means 2026-09-15; seen in October 2026 it
     means 2027-09-15, because a saved event is always in the user's future.
+
+    ``tz`` supplies the zone that decides what "today" is. It matters within a
+    few hours of midnight: at 01:00 IST on 1 January the UTC date is still 31
+    December, which would resolve a year-less date into the wrong year.
     """
     if not value:
         return None
     text = value.strip()
     if not text:
         return None
-    reference = today or utcnow().date()
+    if today is not None:
+        reference = today
+    elif tz is not None:
+        reference = local_today(tz)
+    else:
+        reference = utcnow().date()
 
     match = _ISO_DATE.match(text)
     if match:
@@ -121,28 +144,44 @@ def _apply_meridiem(hour: int, meridiem: str | None) -> int:
     return hour
 
 
-def parse_datetime(value: str | None) -> datetime | None:
-    """Parse an ISO-8601 datetime, tolerating a trailing Z and a bare date."""
+def parse_datetime(
+    value: str | None, *, tz: ZoneInfo | timezone
+) -> datetime | None:
+    """Parse an ISO-8601 datetime into an aware **UTC** instant.
+
+    Tolerates a trailing ``Z`` and a bare date. A string carrying a real offset
+    is trusted as-is; a naive string is wall-clock in ``tz``, because that is
+    what a model transcribing "7:30 pm" actually saw.
+    """
     if not value:
         return None
     text = value.strip().replace("Z", "+00:00")
     try:
         parsed = datetime.fromisoformat(text)
     except ValueError:
-        parsed_date = parse_date(value)
+        parsed_date = parse_date(value, tz=tz)
         if parsed_date is None:
             return None
         parsed = datetime.combine(parsed_date, time(9, 0))
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    return to_utc(parsed, tz)
 
 
 def combine(
-    day: date | None, at: time | None, *, default_hour: int = 9
+    day: date | None,
+    at: time | None,
+    *,
+    tz: ZoneInfo | timezone,
+    default_hour: int = 9,
 ) -> datetime | None:
-    """Build an aware UTC datetime, defaulting a missing time to the morning."""
+    """Turn a local date + wall-clock time into an aware UTC instant.
+
+    ``tz`` is required: the whole point of this function is that "2026-09-14
+    19:30" is not an instant until a zone says which 19:30 it is.
+    """
     if day is None:
         return None
-    return datetime.combine(day, at or time(default_hour, 0), tzinfo=timezone.utc)
+    naive = datetime.combine(day, at or time(default_hour, 0))
+    return to_utc(naive, tz)
 
 
 def humanise_until(target: datetime, *, now: datetime | None = None) -> str:

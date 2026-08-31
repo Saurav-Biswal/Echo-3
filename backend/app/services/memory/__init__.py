@@ -9,7 +9,9 @@ because the point of the correction is to fix what Echo will *do*.
 
 from __future__ import annotations
 
+from datetime import timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from app.models import (
     Category,
@@ -28,6 +30,7 @@ from app.services.intent import IntentResult
 from app.services.media.normalized import NormalizedMedia
 from app.services.trigger import build_triggers
 from app.utils.timeparse import combine, parse_date, parse_time
+from app.utils.timezones import resolve_zone
 
 # What moment a re-categorised memory should resurface at.
 _CORRECTION_RESURFACING: dict[Category, TriggerType] = {
@@ -62,16 +65,20 @@ def _synthesize_entity(analysis: IntentAnalysis) -> ExtractedEntity:
 
 
 def _to_orm_entity(
-    extracted: ExtractedEntity, category: Category, *, is_primary: bool
+    extracted: ExtractedEntity,
+    category: Category,
+    *,
+    is_primary: bool,
+    tz: ZoneInfo | timezone,
 ) -> Entity:
-    event_date = parse_date(extracted.date) if extracted.date else None
+    event_date = parse_date(extracted.date, tz=tz) if extracted.date else None
     starts_at = (
-        combine(event_date, parse_time(extracted.time))
+        combine(event_date, parse_time(extracted.time), tz=tz)
         if event_date is not None
         else None
     )
     ends_at = (
-        combine(event_date, parse_time(extracted.end_time))
+        combine(event_date, parse_time(extracted.end_time), tz=tz)
         if event_date is not None and extracted.end_time
         else None
     )
@@ -108,12 +115,14 @@ def _to_orm_entity(
     )
 
 
-def _entities_from_analysis(analysis: IntentAnalysis) -> list[Entity]:
+def _entities_from_analysis(
+    analysis: IntentAnalysis, *, tz: ZoneInfo | timezone
+) -> list[Entity]:
     extracted = analysis.entities.for_category(analysis.category)
     if not extracted:
         extracted = [_synthesize_entity(analysis)]
     return [
-        _to_orm_entity(item, analysis.category, is_primary=(index == 0))
+        _to_orm_entity(item, analysis.category, is_primary=(index == 0), tz=tz)
         for index, item in enumerate(extracted[:5])
     ]
 
@@ -159,15 +168,22 @@ class MemoryService:
         media: NormalizedMedia,
         source: MediaSource,
         intent_result: IntentResult,
+        timezone_name: str | None = None,
     ) -> EchoMemory:
-        analysis: IntentAnalysis = intent_result.analysis  # type: ignore[assignment]
+        """Compose and persist a full memory.
 
-        entities = _entities_from_analysis(analysis)
+        ``timezone_name`` is the owning user's IANA zone; every wall-clock time
+        in the analysis is interpreted in it before being stored as UTC.
+        """
+        analysis: IntentAnalysis = intent_result.analysis  # type: ignore[assignment]
+        tz = resolve_zone(timezone_name)
+
+        entities = _entities_from_analysis(analysis, tz=tz)
         primary = entities[0] if entities else None
         source_url = source.source_url if source is not None else media.source_url
 
         triggers = build_triggers(
-            analysis=analysis, entity=primary, user_id=user_id
+            analysis=analysis, entity=primary, user_id=user_id, tz=tz
         )
         actions = build_actions(
             category=analysis.category,
@@ -198,7 +214,11 @@ class MemoryService:
         return await self.memories.create(memory)
 
     async def apply_correction(
-        self, memory: EchoMemory, correction: MemoryCorrection
+        self,
+        memory: EchoMemory,
+        correction: MemoryCorrection,
+        *,
+        timezone_name: str | None = None,
     ) -> EchoMemory:
         touched = False
 
@@ -210,7 +230,7 @@ class MemoryService:
             memory.user_corrected = True
             touched = True
         if correction.category is not None and correction.category != memory.category:
-            self._recategorise(memory, correction.category)
+            self._recategorise(memory, correction.category, resolve_zone(timezone_name))
             memory.user_corrected = True
             touched = True
 
@@ -222,7 +242,12 @@ class MemoryService:
         await self.session.flush()
         return memory
 
-    def _recategorise(self, memory: EchoMemory, new_category: Category) -> None:
+    def _recategorise(
+        self,
+        memory: EchoMemory,
+        new_category: Category,
+        tz: ZoneInfo | timezone,
+    ) -> None:
         """Change the category and re-derive what the memory will *do* (§14)."""
         memory.category = new_category
 
@@ -240,7 +265,7 @@ class MemoryService:
 
         source_url = memory.source.source_url if memory.source is not None else None
         memory.triggers = build_triggers(
-            analysis=analysis, entity=primary, user_id=memory.user_id
+            analysis=analysis, entity=primary, user_id=memory.user_id, tz=tz
         )
         memory.actions = build_actions(
             category=new_category,

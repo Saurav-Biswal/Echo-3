@@ -9,6 +9,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * Echo backend endpoints (docs/API.md). Paths are relative to a base URL that
@@ -42,4 +43,18 @@ interface EchoApi {
 
     @GET("overview")
     suspend fun overview(): Response<OverviewResponse>
+
+    /** The resurfacing feed the device polls; filter by status (e.g. "SENT"). */
+    @GET("notifications")
+    suspend fun notifications(
+        @Query("status") status: String? = null,
+        @Query("limit") limit: Int = 50,
+    ): Response<NotificationPage>
+
+    /** Acknowledge a notification: body {"action": "acted"|"dismissed"}. */
+    @POST("notifications/{id}/ack")
+    suspend fun ack(
+        @Path("id") id: String,
+        @Body body: Map<String, String>,
+    ): Response<Ack>
 }

@@ -17,7 +17,7 @@ from pathlib import Path
 
 from app.db.session import session_scope
 from app.models import InputType, JobStatus, ProcessingJob
-from app.repositories import JobRepository, SourceRepository
+from app.repositories import JobRepository, SourceRepository, UserRepository
 from app.services import source as source_service
 from app.services.intent import IntentService
 from app.services.media.acquisition import get_media_acquisition_service
@@ -148,11 +148,16 @@ class _JobRun:
     async def _save(self, media: NormalizedMedia, result) -> None:
         service = MemoryService(self.session)
         source = await service.create_source(media, user_id=self.job.user_id)
+        # The owner's zone decides what "7:30 pm" in the source means. Read it
+        # here rather than threading it down from the request: a retried job has
+        # no request, and the stored zone is the same one the phone reported.
+        owner = await UserRepository(self.session).get(self.job.user_id)
         memory = await service.create_from_analysis(
             user_id=self.job.user_id,
             media=media,
             source=source,
             intent_result=result,
+            timezone_name=owner.timezone if owner is not None else None,
         )
         self.job.source_id = source.id
         self.job.memory_id = memory.id

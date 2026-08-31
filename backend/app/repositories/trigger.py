@@ -136,6 +136,27 @@ class TriggerRepository(Repository):
         )
         return list(result.scalars().all())
 
+    async def due_user_ids(self, *, as_of: datetime) -> list[uuid.UUID]:
+        """Distinct users who have at least one due DATE/TIME trigger.
+
+        The autonomous scan loop uses this to visit only users with work
+        pending, then fires each through the canonical resurface path rather
+        than firing triggers here (keeping one firing code path, §45).
+        """
+        result = await self.session.execute(
+            select(ResurfacingTrigger.user_id)
+            .where(
+                ResurfacingTrigger.status == TriggerStatus.PENDING,
+                ResurfacingTrigger.trigger_type.in_(
+                    (TriggerType.DATE, TriggerType.TIME)
+                ),
+                ResurfacingTrigger.fire_at.is_not(None),
+                ResurfacingTrigger.fire_at <= as_of,
+            )
+            .distinct()
+        )
+        return list(result.scalars().all())
+
     async def pending_for_memory(
         self, memory_id: uuid.UUID
     ) -> list[ResurfacingTrigger]:

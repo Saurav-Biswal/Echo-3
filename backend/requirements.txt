@@ -26,6 +26,12 @@ yt-dlp>=2024.12.13
 # --- OCR (screenshot fallback; Gemini vision is the primary path) ---
 pillow>=11.0
 
+# --- Timezones ---
+# Windows ships no system tz database, so `zoneinfo.ZoneInfo("Asia/Kolkata")`
+# raises ZoneInfoNotFoundError without this. Required, not optional: user
+# timezone normalisation is load-bearing for reminder scheduling.
+tzdata>=2024.2
+
 # --- Logging ---
 structlog>=24.4
 

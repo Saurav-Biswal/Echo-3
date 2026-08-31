@@ -23,7 +23,7 @@ from app.db.session import dispose_engine
 from app.schemas.common import ErrorBody, ErrorResponse
 from app.utils.errors import EchoError
 from app.utils.logging import configure_logging, get_logger
-from app.workers import start_worker, stop_worker
+from app.workers import start_scanner, start_worker, stop_scanner, stop_worker
 
 logger = get_logger(__name__)
 
@@ -33,10 +33,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging()
     await init_db()
     await start_worker()
+    await start_scanner()
     logger.info("app.started", env=settings.app_env, ai=settings.resolved_ai_provider())
     try:
         yield
     finally:
+        await stop_scanner()
         await stop_worker()
         await dispose_engine()
         logger.info("app.stopped")

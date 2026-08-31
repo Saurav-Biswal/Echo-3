@@ -109,3 +109,37 @@ data class ActionDto(
     @SerialName("is_primary") val isPrimary: Boolean = false,
     @SerialName("sort_order") val sortOrder: Int = 0,
 )
+
+/**
+ * A resurfacing notification the backend has sent (§22). The device polls these
+ * (status=SENT) and raises a system notification for each new one. [actions] is
+ * the snapshot the backend took at send time.
+ */
+@Serializable
+data class NotificationDto(
+    val id: String,
+    @SerialName("memory_id") val memoryId: String,
+    val category: String,
+    @SerialName("trigger_type") val triggerType: String,
+    val title: String,
+    val body: String,
+    val why: String,
+    val status: String,
+    @SerialName("sent_at") val sentAt: String? = null,
+    val actions: List<ActionDto> = emptyList(),
+)
+
+/** Page envelope the backend wraps list responses in: {items,total,limit,offset}. */
+@Serializable
+data class NotificationPage(
+    val items: List<NotificationDto> = emptyList(),
+    val total: Int = 0,
+    val limit: Int = 0,
+    val offset: Int = 0,
+)
+
+/** Generic acknowledgement body ({"message": "..."}). */
+@Serializable
+data class Ack(
+    val message: String? = null,
+)

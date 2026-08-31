@@ -123,6 +123,14 @@ class EchoRepository(private val api: EchoApi = Network.api) {
     suspend fun correct(memoryId: String, correction: MemoryCorrection): Result<MemoryDto> =
         callFor { api.correct(memoryId, correction) }
 
+    /** The resurfacing feed the poller reads; defaults to freshly-SENT notices. */
+    suspend fun notifications(status: String = "SENT"): Result<NotificationPage> =
+        callFor { api.notifications(status = status) }
+
+    /** Ack a notification. [action] "acted" (default) or "dismissed" (§22). */
+    suspend fun ack(id: String, action: String = "acted"): Result<Unit> =
+        callFor { api.ack(id, mapOf("action" to action)) }.map { }
+
     private suspend fun <T> callFor(block: suspend () -> Response<T>): Result<T> =
         try {
             val response = block()
