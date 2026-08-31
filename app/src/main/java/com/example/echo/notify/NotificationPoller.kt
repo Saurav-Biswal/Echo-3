@@ -90,7 +90,7 @@ class NotificationPoller : Service() {
     }
 
     companion object {
-        private const val POLL_MS = 30_000L
+        private const val POLL_MS = 15_000L
 
         fun start(context: Context) {
             val intent = Intent(context, NotificationPoller::class.java)

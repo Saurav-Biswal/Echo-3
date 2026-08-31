@@ -94,6 +94,28 @@ async def test_resurface(
     )
 
 
+@router.post("/demo/simulate-nearby", response_model=ResurfaceResponse)
+async def simulate_nearby(
+    payload: ResurfaceRequest, user: CurrentUser, session: SessionDep
+) -> ResurfaceResponse:
+    """Simulate a geofence ENTER for a specific memory (§45 demo control).
+
+    Called by the Android "Simulate Nearby" button. Uses the same
+    ``ResurfacingService.resurface()`` path that Phase 1 proved out for
+    date/time notifications — ``force=True`` so the trigger fires regardless
+    of actual coordinates.
+    """
+    _require_demo()
+    context = TriggerContext(now=utcnow(), latitude=None, longitude=None, force=True)
+    return await _resurface(
+        session,
+        user_id=user.id,
+        context=context,
+        memory_id=payload.memory_id,
+        trigger_type=payload.trigger_type,
+    )
+
+
 @router.post("/demo/simulate-location", response_model=ResurfaceResponse)
 async def simulate_location(
     payload: SimulateLocationRequest, user: CurrentUser, session: SessionDep

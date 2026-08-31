@@ -35,6 +35,10 @@ class HomeViewModel(
     /** A memory to surface front-and-center (e.g. opened from a notification tap). */
     val focusedMemory: StateFlow<MemoryDto?> = _focused.asStateFlow()
 
+    private val _simStatus = MutableStateFlow<String?>(null)
+    /** Transient feedback for the Simulate Nearby action. */
+    val simStatus: StateFlow<String?> = _simStatus.asStateFlow()
+
     fun refresh() {
         viewModelScope.launch {
             if (_state.value !is HomeUiState.Loaded) _state.value = HomeUiState.Loading
@@ -80,6 +84,27 @@ class HomeViewModel(
         _capture.value = null
     }
 
+    /** Simulate a geofence ENTER for a specific memory (demo action, §45). */
+    fun simulateNearby(memoryId: String) {
+        viewModelScope.launch {
+            _simStatus.value = "⚡ Resurfacing…"
+            repo.simulateNearby(memoryId)
+                .onSuccess { resp ->
+                    _simStatus.value = if (resp.fired > 0) {
+                        "📍 Memory resurfaced! Notification incoming…"
+                    } else {
+                        resp.message ?: "No pending trigger to fire."
+                    }
+                }
+                .onFailure { e ->
+                    _simStatus.value = "❌ ${e.message ?: "Simulate failed."}"
+                }
+            // Auto-clear after a few seconds
+            kotlinx.coroutines.delay(4000)
+            _simStatus.value = null
+        }
+    }
+
     /** Load a memory and surface it (called when a notification is tapped). */
     fun openMemory(memoryId: String) {
         viewModelScope.launch {
@@ -91,3 +116,4 @@ class HomeViewModel(
         _focused.value = null
     }
 }
+

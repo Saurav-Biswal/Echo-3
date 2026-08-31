@@ -47,9 +47,11 @@ import com.example.echo.ui.theme.DarkGrey
 fun HomeScreen(
     state: HomeUiState,
     captureStatus: String?,
+    simStatus: String?,
     modifier: Modifier = Modifier,
     onCapture: (content: String, note: String?) -> Unit,
     onRetry: () -> Unit,
+    onSimulateNearby: (String) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize().background(BaseBlack)) {
         ScanlineEffect()
@@ -72,6 +74,25 @@ fun HomeScreen(
                     color = Color.Gray,
                     letterSpacing = 2.sp
                 )
+            }
+
+            // Simulate Nearby status banner
+            if (simStatus != null) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(0.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A00)),
+                        border = BorderStroke(1.dp, Color(0xFFFFAB00).copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            simStatus.uppercase(),
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFFFAB00),
+                        )
+                    }
+                }
             }
 
             when (state) {
@@ -112,7 +133,10 @@ fun HomeScreen(
                             )
                         }
                         items(state.overview.recent, key = { it.id }) { memory ->
-                            MemoryCard(memory)
+                            MemoryCard(
+                                memory = memory,
+                                onSimulateNearby = onSimulateNearby,
+                            )
                         }
                     }
                 }
@@ -121,6 +145,7 @@ fun HomeScreen(
         }
     }
 }
+
 
 @Composable
 private fun StatsRow(overview: OverviewResponse) {

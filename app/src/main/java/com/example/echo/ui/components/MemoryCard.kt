@@ -32,7 +32,11 @@ import com.example.echo.ui.Display
 import com.example.echo.ui.theme.AcidGreen
 
 @Composable
-fun MemoryCard(memory: MemoryDto, modifier: Modifier = Modifier) {
+fun MemoryCard(
+    memory: MemoryDto,
+    modifier: Modifier = Modifier,
+    onSimulateNearby: ((String) -> Unit)? = null,
+) {
     val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -144,6 +148,20 @@ fun MemoryCard(memory: MemoryDto, modifier: Modifier = Modifier) {
                         }
                     }
                 }
+            }
+
+            // Dev/Demo: Simulate Nearby (§45)
+            if (onSimulateNearby != null) {
+                Spacer(Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = { onSimulateNearby(memory.id) },
+                    shape = RoundedCornerShape(0.dp),
+                    border = BorderStroke(1.dp, Color(0xFFFFAB00)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFFFFAB00)
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("⚡ SIMULATE_NEARBY") }
             }
         }
     }

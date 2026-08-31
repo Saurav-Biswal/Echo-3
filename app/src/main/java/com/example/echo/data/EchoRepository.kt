@@ -131,6 +131,10 @@ class EchoRepository(private val api: EchoApi = Network.api) {
     suspend fun ack(id: String, action: String = "acted"): Result<Unit> =
         callFor { api.ack(id, mapOf("action" to action)) }.map { }
 
+    /** Simulate a geofence ENTER: force the memory to resurface now (§45 demo). */
+    suspend fun simulateNearby(memoryId: String): Result<SimulateNearbyResponse> =
+        callFor { api.simulateNearby(SimulateNearbyRequest(memoryId)) }
+
     private suspend fun <T> callFor(block: suspend () -> Response<T>): Result<T> =
         try {
             val response = block()

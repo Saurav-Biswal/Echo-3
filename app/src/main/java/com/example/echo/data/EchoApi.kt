@@ -57,4 +57,10 @@ interface EchoApi {
         @Path("id") id: String,
         @Body body: Map<String, String>,
     ): Response<Ack>
+
+    /** Simulate a geofence ENTER for a specific memory (demo control, §45). */
+    @POST("demo/simulate-nearby")
+    suspend fun simulateNearby(
+        @Body body: SimulateNearbyRequest,
+    ): Response<SimulateNearbyResponse>
 }

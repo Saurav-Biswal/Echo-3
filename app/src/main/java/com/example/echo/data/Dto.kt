@@ -143,3 +143,16 @@ data class NotificationPage(
 data class Ack(
     val message: String? = null,
 )
+
+/** Request body for POST /api/demo/simulate-nearby. */
+@Serializable
+data class SimulateNearbyRequest(
+    @SerialName("memory_id") val memoryId: String,
+)
+
+/** Response from POST /api/demo/simulate-nearby. */
+@Serializable
+data class SimulateNearbyResponse(
+    val fired: Int = 0,
+    val message: String? = null,
+)

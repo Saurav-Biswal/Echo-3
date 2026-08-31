@@ -62,14 +62,17 @@ class MainActivity : ComponentActivity() {
                     Scaffold { inner ->
                         val state by viewModel.state.collectAsStateWithLifecycle()
                         val captureStatus by viewModel.captureStatus.collectAsStateWithLifecycle()
+                        val simStatus by viewModel.simStatus.collectAsStateWithLifecycle()
                         val focused by viewModel.focusedMemory.collectAsStateWithLifecycle()
                         LaunchedEffect(Unit) { viewModel.refresh() }
                         HomeScreen(
                             state = state,
                             captureStatus = captureStatus,
+                            simStatus = simStatus,
                             modifier = Modifier.padding(inner),
                             onCapture = viewModel::captureText,
                             onRetry = viewModel::refresh,
+                            onSimulateNearby = viewModel::simulateNearby,
                         )
                         focused?.let { memory ->
                             Dialog(onDismissRequest = viewModel::dismissFocused) {
