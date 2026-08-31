@@ -37,10 +37,18 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.echo.ui.components.MemoryCard
 import com.example.echo.ui.components.ProcessingAnimation
-import com.example.echo.ui.components.ScanlineEffect
-import com.example.echo.ui.theme.AcidGreen
-import com.example.echo.ui.theme.BaseBlack
-import com.example.echo.ui.theme.DarkGrey
+import com.example.echo.ui.theme.BorderLight
+import com.example.echo.ui.theme.CoralAlert
+import com.example.echo.ui.theme.CoralLight
+import com.example.echo.ui.theme.ForestGreen
+import com.example.echo.ui.theme.MintGreen
+import com.example.echo.ui.theme.MintGreenLight
+import com.example.echo.ui.theme.OffWhiteBackground
+import com.example.echo.ui.theme.PureWhite
+import com.example.echo.ui.theme.SlateSurface
+import com.example.echo.ui.theme.TextMuted
+import com.example.echo.ui.theme.TextPrimary
+import com.example.echo.ui.theme.TextSecondary
 
 @Composable
 fun ShareScreen(
@@ -51,9 +59,7 @@ fun ShareScreen(
     onRetry: () -> Unit,
     onDone: () -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxSize().background(BaseBlack)) {
-        ScanlineEffect()
-        
+    Box(modifier = Modifier.fillMaxSize().background(OffWhiteBackground)) {
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -72,20 +78,20 @@ fun ShareScreen(
 
                 is ShareUiState.Ready -> {
                     Text(
-                        if (state.wasDuplicate) "// DUPLICATE_FOUND" else "// MEMORY_RECOVERED",
-                        style = MaterialTheme.typography.titleLarge,
+                        if (state.wasDuplicate) "✨ Already Saved" else "🎉 Saved to Echo!",
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AcidGreen
+                        color = ForestGreen
                     )
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(16.dp))
                     MemoryCard(state.memory)
                     Spacer(Modifier.height(24.dp))
                     Button(
-                        onClick = onDone, 
+                        onClick = onDone,
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(0.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black)
-                    ) { Text("CLOSE_LOG") }
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MintGreen, contentColor = PureWhite)
+                    ) { Text("Done", fontWeight = FontWeight.Bold) }
                 }
 
                 is ShareUiState.Failure -> FailureView(
@@ -104,25 +110,25 @@ private fun CaptureForm(payload: SharedPayload, onSubmit: (String?) -> Unit) {
     var note by remember { mutableStateOf("") }
 
     Text(
-        "SIGNAL_INTERCEPT",
-        style = MaterialTheme.typography.headlineSmall,
+        "Save to Echo",
+        style = MaterialTheme.typography.headlineMedium,
         fontWeight = FontWeight.Bold,
-        color = AcidGreen
+        color = ForestGreen
     )
     Spacer(Modifier.height(4.dp))
     Text(
-        "EXTRACTING INTENTION FROM EXTERNAL DATA STREAM...",
-        style = MaterialTheme.typography.labelSmall,
-        color = Color.Gray,
-        letterSpacing = 1.sp
+        "Extracting intention and setting up intelligent resurfacing…",
+        style = MaterialTheme.typography.bodyMedium,
+        color = TextSecondary
     )
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(20.dp))
 
     Card(
-        shape = RoundedCornerShape(0.dp), 
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = DarkGrey),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+        colors = CardDefaults.cardColors(containerColor = PureWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, BorderLight)
     ) {
         Column(Modifier.padding(16.dp)) {
             when (payload) {
@@ -130,8 +136,7 @@ private fun CaptureForm(payload: SharedPayload, onSubmit: (String?) -> Unit) {
                     payload.content,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 6,
-                    color = Color.White,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    color = TextPrimary
                 )
 
                 is SharedPayload.Image -> {
@@ -141,33 +146,33 @@ private fun CaptureForm(payload: SharedPayload, onSubmit: (String?) -> Unit) {
                         modifier = Modifier.fillMaxWidth().height(200.dp),
                     )
                     Spacer(Modifier.height(12.dp))
-                    Text("IMAGE_DATA_PACKET", style = MaterialTheme.typography.labelSmall, color = AcidGreen)
+                    Text("📷 Image Captured", style = MaterialTheme.typography.labelSmall, color = ForestGreen)
                 }
             }
         }
     }
 
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(20.dp))
     OutlinedTextField(
         value = note,
         onValueChange = { note = it },
-        label = { Text("ADD_CONTEXT_MANUALLY") },
-        placeholder = { Text("INPUT_FIELD_01") },
+        placeholder = { Text("Add personal context or notes (optional)…", color = TextMuted) },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = AcidGreen,
-            unfocusedBorderColor = Color.Gray,
-            focusedLabelColor = AcidGreen
+            focusedBorderColor = MintGreen,
+            unfocusedBorderColor = BorderLight,
+            focusedContainerColor = PureWhite,
+            unfocusedContainerColor = SlateSurface.copy(alpha = 0.5f)
         )
     )
     Spacer(Modifier.height(24.dp))
     Button(
         onClick = { onSubmit(note.trim().ifBlank { null }) },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(0.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black)
-    ) { Text("START_RECOVERY_ENGINE") }
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MintGreen, contentColor = PureWhite)
+    ) { Text("Save Memory", fontWeight = FontWeight.Bold) }
 }
 
 @Composable
@@ -183,43 +188,44 @@ private fun WorkingView(message: String) {
 
 @Composable
 private fun FailureView(message: String, hint: String?, onRetry: () -> Unit, onDone: () -> Unit) {
-    Text("SYSTEM_FAILURE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Red)
-    Spacer(Modifier.height(12.dp))
-    Text("ERROR_LOG: ${message.uppercase()}", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+    Text("Couldn't Save", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoralAlert)
+    Spacer(Modifier.height(8.dp))
+    Text(message, style = MaterialTheme.typography.bodyLarge, color = TextPrimary)
     hint?.takeIf { it.isNotBlank() }?.let {
-        Spacer(Modifier.height(8.dp))
-        Text("SUGGESTED_FIX: ${it.uppercase()}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+        Spacer(Modifier.height(6.dp))
+        Text(it, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
     }
-    Spacer(Modifier.height(32.dp))
+    Spacer(Modifier.height(24.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(
             onClick = onRetry,
-            shape = RoundedCornerShape(0.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black)
-        ) { Text("RETRY_SEQUENCE") }
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MintGreen, contentColor = PureWhite)
+        ) { Text("Try Again") }
         OutlinedButton(
             onClick = onDone,
-            shape = RoundedCornerShape(0.dp),
-            border = BorderStroke(1.dp, Color.White),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-        ) { Text("ABORT") }
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, BorderLight),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary)
+        ) { Text("Cancel") }
     }
 }
 
 @Composable
 private fun NothingToSave(onDone: () -> Unit) {
-    Text("NULL_PAYLOAD", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = AcidGreen)
-    Spacer(Modifier.height(12.dp))
+    Text("Nothing to Save", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+    Spacer(Modifier.height(8.dp))
     Text(
-        "NO DATA DETECTED IN THE INBOUND STREAM. INITIALIZE TRANSFER FROM SOURCE APP.",
+        "No shared content was detected. Please share a link or text from another app to Echo.",
         style = MaterialTheme.typography.bodyLarge,
-        color = Color.White
+        color = TextSecondary
     )
-    Spacer(Modifier.height(32.dp))
+    Spacer(Modifier.height(24.dp))
     Button(
-        onClick = onDone, 
+        onClick = onDone,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(0.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black)
-    ) { Text("CLOSE_PORT") }
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MintGreen, contentColor = PureWhite)
+    ) { Text("Close") }
 }
+

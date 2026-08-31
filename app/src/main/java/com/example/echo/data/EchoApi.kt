@@ -4,8 +4,10 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
@@ -34,6 +36,15 @@ interface EchoApi {
 
     @GET("memories/{id}")
     suspend fun memory(@Path("id") memoryId: String): Response<MemoryDto>
+
+    @PATCH("memories/{id}")
+    suspend fun updateMemory(
+        @Path("id") memoryId: String,
+        @Body body: Map<String, String>,
+    ): Response<MemoryDto>
+
+    @DELETE("memories/{id}")
+    suspend fun deleteMemory(@Path("id") memoryId: String): Response<Ack>
 
     @POST("memories/{id}/correct")
     suspend fun correct(
@@ -66,3 +77,4 @@ interface EchoApi {
         @Body body: SimulateNearbyRequest,
     ): Response<SimulateNearbyResponse>
 }
+

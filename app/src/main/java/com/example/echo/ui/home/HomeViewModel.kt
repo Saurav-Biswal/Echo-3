@@ -115,5 +115,29 @@ class HomeViewModel(
     fun dismissFocused() {
         _focused.value = null
     }
+
+    /** Delete a memory and refresh the dashboard. */
+    fun deleteMemory(memoryId: String) {
+        viewModelScope.launch {
+            repo.deleteMemory(memoryId).onSuccess {
+                if (_focused.value?.id == memoryId) {
+                    _focused.value = null
+                }
+                refresh()
+            }
+        }
+    }
+
+    /** Mark a memory as completed and refresh the dashboard. */
+    fun completeMemory(memoryId: String) {
+        viewModelScope.launch {
+            repo.completeMemory(memoryId).onSuccess {
+                if (_focused.value?.id == memoryId) {
+                    _focused.value = it
+                }
+                refresh()
+            }
+        }
+    }
 }
 

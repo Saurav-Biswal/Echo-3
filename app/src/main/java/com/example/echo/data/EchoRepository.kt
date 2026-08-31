@@ -139,6 +139,14 @@ class EchoRepository(private val api: EchoApi = Network.api) {
     suspend fun simulateNearby(memoryId: String): Result<SimulateNearbyResponse> =
         callFor { api.simulateNearby(SimulateNearbyRequest(memoryId)) }
 
+    /** Delete a memory permanently. */
+    suspend fun deleteMemory(memoryId: String): Result<Ack> =
+        callFor { api.deleteMemory(memoryId) }
+
+    /** Mark a memory as COMPLETED. */
+    suspend fun completeMemory(memoryId: String): Result<MemoryDto> =
+        callFor { api.updateMemory(memoryId, mapOf("status" to "COMPLETED")) }
+
     private suspend fun <T> callFor(block: suspend () -> Response<T>): Result<T> =
         try {
             val response = block()
